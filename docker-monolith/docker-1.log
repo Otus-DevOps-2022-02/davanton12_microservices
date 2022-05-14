@@ -1,0 +1,8 @@
+REPOSITORY                  TAG       IMAGE ID       CREATED         SIZE
+adavidenko/nginx-tmp-file   latest    167f0a886691   3 minutes ago   142MB
+nginx                       latest    7425d3a7c478   3 days ago      142MB
+ubuntu                      18.04     c6ad7e71ba7d   2 weeks ago     63.2MB
+hello-world                 latest    feb5d9fea6a5   7 months ago    13.3kB
+
+Образ - это артефакт с ОС и дополнительным ПО (пример - образ убунту + сервис nginx)
+Конейнер - это сущность, куда разворачивается образ. (пример - как псевдовиртуальный хост, со своими настройками,параметрами и ресурсами)
