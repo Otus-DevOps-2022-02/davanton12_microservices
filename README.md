@@ -125,3 +125,84 @@ docker run --name reddit --rm -it /otus-reddit:1.0 bash
 docker-machine rm docker-host
 yc compute instance delete docker-host
 ```
+
+## Лекция 17
+
+### Docker-3
+Создадим Docker хост в Yandex Cloud
+```
+yc compute instance create
+```
+Установка docker-machine
+```
+docker-machine create
+```
+Смотрим
+```
+docker-machine ls
+```
+Переключаемся
+```
+eval $(docker-machine env docker-hosts)
+```
+Скачали образ
+```
+docker pull mongo:latest
+```
+Соберем образы с нашими сервисами:
+ - сервис отвечающий за написание постов
+```
+docker build -t adavidenko/post:1.0 ./post-py
+```
+ - сервис отвечающий за написание комментариев
+```
+docker build -t adavidenko/comment:1.0 ./comment
+```
+ - веб-интерфейс, работающий с другими сервисами
+```
+docker build -t adavidenko/ui:1.0 ./ui
+```
+Создадим специальную сеть для приложения:
+```
+docker network create reddit
+```
+Запустим наши контейнеры
+```
+docker run -d --network=reddit --network-alias=post_db --network-alias=comment_db mongo:latest
+docker run -d --network=reddit --network-alias=post adavidenko/post:1.0
+docker run -d --network=reddit --network-alias=comment adavidenko/comment:1.0
+docker run -d --network=reddit -p 9292:9292 adavidenko/ui:1.0
+```
+Проверка - http://51.250.90.59:9292
+
+Остановка контейнеров
+```
+docker kill $(docker ps -q)
+```
+Поменял алиасы
+```
+docker run -d --network=reddit --network-alias=post_db_new --network-alias=comment_db_new mongo:latest
+docker run -d --network=reddit --network-alias=post_new -e POST_DATABASE=posts_new -e POST_DATABASE_HOST=post_db_new  adavidenko/post:1.0
+docker run -d --network=reddit --network-alias=comment_new -e COMMENT_DATABASE_HOST=comment_db_new -e COMMENT_DATABASE=comments_new adavidenko/comment:1.0
+docker run -d --network=reddit -p 9292:9292 -e POST_SERVICE_HOST=post_new -e COMMENT_SERVICE_HOST=comment_new adavidenko/ui:1.0
+```
+Создадим Docker volume:
+```
+docker volume create reddit_db
+```
+Запуск с новыми параметрами
+```
+docker run -d --network=reddit --network-alias=post_db --network-alias=comment_db -v reddit_db:/data/db mongo:latest
+docker run -d --network=reddit --network-alias=post adavidenko/post:1.0
+docker run -d --network=reddit --network-alias=comment adavidenko/comment:1.0
+docker run -d --network=reddit -p 9292:9292 adavidenko/ui:2.0
+```
+Перезагрузка контейнера и проверка, что наши данные сохранились - http://51.250.90.59:9292
+
+Зачистка
+```
+docker rm $(docker ps -q)
+docker rmi $(docker images -q)
+docker-machine rm docker-host
+yc compute instance delete docker-host
+```
