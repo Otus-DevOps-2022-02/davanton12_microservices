@@ -279,3 +279,39 @@ COMPOSE_PROJECT_NAME
 Задает имя проекта. Это значение добавляется вместе с именем службы в контейнер при запуске. Например, если ваш проект называется myapp и включает в себя две службы db и web, Compose запускает контейнеры с именами myapp-db-1 и myapp-web-1 соответственно.
 Установка этого параметра необязательна. Если вы не установите это, COMPOSE_PROJECT_NAME по умолчанию будет базовым именем каталога проекта.
 ```
+## Лекция gitlab-ci
+### В процессе сделано:
+ - Добавить remote
+```
+git checkout -b gitlab-ci-1
+git remote add gitlab http://51.250.94.138/homework/example.git
+```
+ - Установить раннер внутри докера
+```
+docker run -d --name gitlab-runner --restart always -v /srv/gitlabrunner/config:/etc/gitlab-runner -v /var/run/docker.sock:/var/run/docker.sock gitlab/gitlab-runner:latest
+```
+ - Зарегистрировать раннер
+```
+docker exec -it gitlab-runner gitlab-runner register
+--url http://51.250.94.138/
+--non-interactive
+--locked=false
+--name DockerRunner
+--executor docker
+--docker-image alpine:latest
+--registration-token r4cGznxa45P5wx_B9CHo
+--tag-list "linux,xenial,ubuntu,docker"
+--run-untagged
+```
+ - Добавить исходный код reddit в репозиторий:
+```
+git clone https://github.com/express42/reddit.git && rm -rf ./reddit/.git
+git add reddit/
+git commit -m "Add reddit app"
+git push gitlab gitlab-ci-1
+```
+### Как запустить проект:
+ - docker-compose up -d
+
+### Как проверить работоспособность:
+ - http://51.250.94.138
