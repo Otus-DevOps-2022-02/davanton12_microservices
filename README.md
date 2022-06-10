@@ -315,3 +315,87 @@ git push gitlab gitlab-ci-1
 
 ### Как проверить работоспособность:
  - http://51.250.94.138
+
+## Лекция monitoring
+### Создадим инстанс на YC
+```
+yc compute instance create \
+--name docker-host \
+--zone ru-central1-a \
+--network-interface subnet-name=default-ru-central1-a,nat-ip-version=ipv4 \
+--create-boot-disk image-folder-id=standard-images,image-family=ubuntu-1804-lts,size=15 \
+--ssh-key ~/.ssh/appuser.pub
+```
+### Уточним внешний ip
+```
+one_to_one_nat:
+      address: 51.250.88.60
+      ip_version: IPV4
+```
+### Запустим docker-machine
+```
+docker-machine create \
+--driver generic \
+--generic-ip-address=51.250.88.60 \
+--generic-ssh-user yc-user \
+--generic-ssh-key ~/.ssh/appuser \
+docker-host
+```
+### переключимся на работу с docker-machine
+```
+eval $(docker-machine env docker-host)
+```
+### Уточнить ip docker-machine
+```
+docker-machine ip docker-host
+```
+### Запустить prometheus
+```
+docker run --rm -p 9090:9090 -d --name prometheus prom/prometheus
+```
+### Соберем образ своего prometheus
+```
+export USER_NAME=adavidenko
+docker build -t $USER_NAME/prometheus .
+```
+### Создадим образы через docker_build.sh
+```
+for i in ui post-py comment; do cd src/$i; bash docker_build.sh; cd -; done
+```
+### Создадим описание нашего docker-compose и запустим его
+```
+docker-compose up -d
+```
+### Проверим как отзываются метрики если потушим один из контейнеров
+```
+docker-compose stop post
+docker-compose start post
+```
+### Добавим node_exporter, проверим состояние CPU, дадим нагрузку
+```
+docker-machine ssh docker-host
+yes > /dev/null
+```
+### Задлогинимся и запушим свои образы на DockerHub
+```
+docker login
+docker push $USER_NAME/ui
+docker push $USER_NAME/comment
+docker push $USER_NAME/post
+docker push $USER_NAME/prometheus
+```
+### Готовые образы
+
+ - https://hub.docker.com/layers/231788293/adavidenko/ui/latest/images/sha256-deadb01ce2592e64ac49705c7629b25029b230bd719a6f09cd827667edce2018?context=repo
+ - https://hub.docker.com/layers/231788736/adavidenko/post/latest/images/sha256-84d51eb6bf140211a282f353d55125af4f32a8ea63a4e15e745ee8f9a5e2a8ad?context=repo
+ - https://hub.docker.com/layers/231788552/adavidenko/comment/latest/images/sha256-f5e72b42b0bba6421836d32e375a763b00d4123ee442153c363f82e8ca84af78?context=repo
+ - https://hub.docker.com/layers/231788854/adavidenko/prometheus/latest/images/sha256-f7993235c20ecad2037780c71ea81d73c8bd48bfab88e92e2d3873c256a68145?context=repo
+
+### Зачистка
+```
+docker-compose down
+docker rm $(docker ps -q)
+docker rmi $(docker images -q)
+docker-machine rm docker-host
+yc compute instance delete docker-host
+```
