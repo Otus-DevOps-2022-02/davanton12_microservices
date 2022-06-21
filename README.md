@@ -399,3 +399,12 @@ docker rmi $(docker images -q)
 docker-machine rm docker-host
 yc compute instance delete docker-host
 ```
+
+## Лекция logging
+### В процессе сделано:
+- Подготовка окружения
+- Логирование Docker-контейнеров
+- Сбор неструктурированных логов
+- Визуализация логов
+- Сбор структурированных логов
+- Распределенный трейсинг

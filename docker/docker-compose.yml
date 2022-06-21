@@ -2,26 +2,46 @@ version: '3.3'
 services:
   post_db:
     image: mongo:${post_db_tag}
+    environment:
+      - ZIPKIN_ENABLED=${ZIPKIN_ENABLED}
     volumes:
       - post_db:/data/db
     networks:
-      - back_net
+      - back-network
   ui:
     image: ${USERNAME}/ui:${ui_tag}
+    environment:
+      - ZIPKIN_ENABLED=${ZIPKIN_ENABLED}
     ports:
       - ${ui_host_port}:${ui_docker_port}
     networks:
-      - front_net
+      - front-network
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: localhost:24224
+        tag: service.ui
+
   post:
     image: ${USERNAME}/post:${post_tag}
+    environment:
+      - ZIPKIN_ENABLED=${ZIPKIN_ENABLED}
     networks:
-      - front_net
-      - back_net
+      - front-network
+      - back-network
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: localhost:24224
+        tag: service.post
+
   comment:
     image: ${USERNAME}/comment:${comment_tag}
+    environment:
+      - ZIPKIN_ENABLED=${ZIPKIN_ENABLED}
     networks:
-      - front_net
-      - back_net
+      - front-network
+      - back-network
   prometheus:
     image: ${USERNAME}/prometheus
     ports:
@@ -33,8 +53,8 @@ services:
       - '--storage.tsdb.path=/prometheus'
       - '--storage.tsdb.retention=1d'
     networks:
-      - front_net
-      - back_net
+      - front-network
+      - back-network
   node-exporter:
     image: prom/node-exporter:v0.15.2
     user: root
@@ -47,18 +67,20 @@ services:
       - '--path.sysfs=/host/sys'
       - '--collector.filesystem.ignored-mount-points="^/(sys|proc|dev|host|etc)($$|/)"'
     networks:
-      - front_net
-      - back_net
+      - front-network
+      - back-network
 volumes:
   prometheus_data:
   post_db:
 
 networks:
-  back_net:
+  back-network:
+    driver: bridge
     ipam:
       config:
-        - subnet: 10.0.7.0/24
-  front_net:
+        - subnet: 10.0.2.0/24
+  front-network:
+    driver: bridge
     ipam:
       config:
-        - subnet: 10.0.8.0/24
+        - subnet: 10.0.1.0/24
