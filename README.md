@@ -408,3 +408,58 @@ yc compute instance delete docker-host
 - Визуализация логов
 - Сбор структурированных логов
 - Распределенный трейсинг
+
+## Лекция kubernetes-1
+### 1. Создать 2 ВМ на Яндекс Облаке (1нода-мастер, 2нода-воркер)
+```
+Характеристики
+RAM 4
+CPU 4
+SSD 40 GB
+```
+### 2. Зайти на каждую ВМ и установить
+```
+sudo apt update
+sudo apt-get install -y apt-transport-https ca-certificates curl
+sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+sudo apt-get update
+sudo apt-get install -y kubelet kubeadm kubectl
+sudo apt install docker.io
+```
+### 3. Зайти на ноду мастер и выполнить
+```
+sudo kubeadm init --apiserver-cert-extra-sans=51.250.92.72 --apiserver-advertise-address=0.0.0.0 --control-plane-endpoint=51.250.92.72 --pod-network-cidr=10.244.0.0/16
+В итоге получим уведомление и дальнейшую инструкцию
+```
+### 4. Перекинуть kube_config к себе на локальную машину
+```
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/confi
+```
+### 5. Зайти на ноду воркер и выполнить команду
+```
+kubeadm join 51.250.92.72:6443 --token yk50x3.u3kwb0njwyhafqec \
+        --discovery-token-ca-cert-hash sha256:d44c17e0dd7066d95dc837333dcb027a165acc2054fb0def541925148a9e87ca
+```
+### 6. На локальной машине выполнить проверку
+```
+kubectl get nodes
+kubectl describe node node-name
+```
+### 7. Скачать calico и настроить
+```
+curl https://projectcalico.docs.tigera.io/manifests/calico.yaml -O
+Обратите внимание, что нужно изменить параметр в ранее скачанном файле calico.yaml
+Значение CALICO_IPV4POOL_CIDR должно быть 10.244.0.0/16
+kubectl apply -f calico.yaml
+```
+### 8. Проверить, что ноды в статусе Ready
+```
+kubectl get nodes
+```
+### 9. Можно запускать манифесты
+```
+kubectl apply -f <filename>
+```
