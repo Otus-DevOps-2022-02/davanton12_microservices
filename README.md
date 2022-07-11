@@ -463,3 +463,46 @@ kubectl get nodes
 ```
 kubectl apply -f <filename>
 ```
+
+## Лекция kubernetes-2
+### Minikube-кластер
+Запустим наш Minikube-кластер
+- minikube start --kubernetes-version 1.19.7
+
+Проверим Minikube-кластер
+- kubectl get nodes
+
+Создать cluster
+- kubectl config set-cluster ... cluster_name
+
+Создать данные пользователя (credentials)
+- kubectl config set-credentials ... user_name
+
+Создать контекст
+```
+kubectl config set-context context_name \
+ --cluster=cluster_name \
+ --user=user_name
+```
+Использовать контекст
+- kubectl config use-context context_name
+
+Текущий контекст можно увидеть так:
+- kubeclt config current-context
+
+Список всех контекстов можно увидеть так:
+- kubectl config get-contexts
+
+Запустим в Minikube ui-компонент
+- kubectl apply -f ui-deployment.yml
+- kubectl get deployment
+- kubectl apply -f ./kubernetes/reddit
+- kubectl get pods --selector component=ui
+- kubectl port-forward <pod-name> 8080:9292
+### Запуск k8s в YC
+- yc managed-kubernetes cluster get-credentials otus-claster-k8s --external
+- kubectl config current-context
+- kubectl apply -f ./kubernetes/reddit/dev-namespace.yml
+- kubectl apply -f ./kubernetes/reddit/ -n dev
+- kubectl get nodes -o wide
+- kubectl describe service ui -n dev | grep NodePort
