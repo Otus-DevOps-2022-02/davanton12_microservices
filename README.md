@@ -506,3 +506,46 @@ kubectl config set-context context_name \
 - kubectl apply -f ./kubernetes/reddit/ -n dev
 - kubectl get nodes -o wide
 - kubectl describe service ui -n dev | grep NodePort
+
+## Лекция kubernetes-3
+### Ознакомились с:
+- Ingress Controller
+- Ingress
+- Secret
+- TLS
+- LoadBalancer Service
+- Network Policies
+- PersistentVolumes
+- PersistentVolumeClaims
+
+### Установка Ingress
+```
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingressnginx/controller-v0.34.1/deploy/static/provider/cloud/deploy.yaml
+kubectl apply -f ui-ingress.yml -n dev
+kubectl get ingress
+kubectl get ingress -n dev
+```
+### Создание секрета с сертификатом для ingress
+```
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout tls.key -out tls.crt -subj "/CN=35.190.66.90"
+kubectl create secret tls ui-ingress --key tls.key --cert tls.crt -n dev
+kubectl describe secret ui-ingress -n dev
+```
+### Network Policy для Google Cloud
+```
+gcloud beta container clusters list
+gcloud beta container clusters update <cluster-name> --zone=us-central1-a --update-addons=NetworkPolicy=ENABLED
+gcloud beta container clusters update <cluster-name> --zone=us-central1-a --enable-network-policy
+```
+### PersitentVolume и PVC
+- Для начала создадим диск в ya.cloud командой:
+```
+yc compute disk create \
+ --name k8s \
+ --size 4 \
+ --description "disk for k8s"
+```
+- Посмотреть список дисков можно следующей командой:
+```
+yc compute disk list
+``` 
