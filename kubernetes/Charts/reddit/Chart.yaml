@@ -1,0 +1,7 @@
+name: reddit
+version: 0.1.0
+description: OTUS sample reddit application
+maintainers: # (optional)
+  - name: adavidenko
+    email: student@mail.ru
+appVersion: 1.0
