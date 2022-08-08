@@ -549,3 +549,7 @@ yc compute disk create \
 ```
 yc compute disk list
 ``` 
+## Лекция kubernetes-4
+- Познакомились Helm
+- При помощи Helm развернули Gitlab в Kubernetes
+- Запустили CI/CD конвейер в Kubernetes
